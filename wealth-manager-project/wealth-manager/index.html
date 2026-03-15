@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <!-- PWA / Mobile App Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0c0e13">
+  <meta name="description" content="Personal Wealth Manager — Portfolio + Expense Tracker">
+
+  <title>WealthMgr</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+  <!-- Our CSS files (order matters) -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ════════════════════════════════════════
+       SIDEBAR NAVIGATION
+  ════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-name">WealthMgr</div>
+      <div class="logo-tag">Portfolio OS</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-sec">Overview</div>
+      <button class="nav-item active" onclick="go('dashboard', this)">
+        <i class="nav-icon">◈</i><span>Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="go('networth', this)">
+        <i class="nav-icon">◎</i><span>Net Worth</span>
+      </button>
+
+      <div class="nav-sec">Expenses</div>
+      <button class="nav-item" onclick="go('expenses', this)">
+        <i class="nav-icon">↯</i><span>Transactions</span>
+      </button>
+      <button class="nav-item" onclick="go('budget', this)">
+        <i class="nav-icon">▣</i><span>Budget</span>
+      </button>
+      <button class="nav-item" onclick="go('upi', this)">
+        <i class="nav-icon">⟳</i><span>UPI Apps</span>
+      </button>
+      <button class="nav-item" onclick="go('add-expense', this)">
+        <i class="nav-icon">⊕</i><span>Add Expense</span>
+      </button>
+
+      <div class="nav-sec">Portfolio</div>
+      <button class="nav-item" onclick="go('sip', this)">
+        <i class="nav-icon">↻</i><span>SIP Planner</span>
+      </button>
+      <button class="nav-item" onclick="go('funds', this)">
+        <i class="nav-icon">▦</i><span>Mutual Funds</span>
+      </button>
+      <button class="nav-item" onclick="go('stocks', this)">
+        <i class="nav-icon">▲</i><span>Stocks</span>
+      </button>
+
+      <div class="nav-sec">Setup</div>
+      <button class="nav-item" onclick="go('settings', this)">
+        <i class="nav-icon">⚙</i><span>Settings</span>
+      </button>
+    </nav>
+
+    <!-- Net worth summary at bottom of sidebar -->
+    <div class="sidebar-foot">
+      <div class="net-worth-label">Net Worth</div>
+      <div class="net-worth-val" id="sb-nw">₹0</div>
+      <div class="nw-sub" id="sb-nw-sub">Loading...</div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════════
+       MAIN CONTENT AREA
+  ════════════════════════════════════════ -->
+  <main class="content">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="ph">
+        <div class="ph-title">Dashboard</div>
+        <div class="ph-sub" id="dash-date"></div>
+        <div class="ph-row">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-gold" onclick="go('add-expense', null)">+ Add Expense</button>
+            <button class="btn btn-outline" onclick="go('funds', null)">Manage Portfolio</button>
+          </div>
+        </div>
+      </div>
+      <div class="mgrid" id="dash-metrics"></div>
+      <div class="g3">
+        <div class="card">
+          <div class="sec">Spending This Month</div>
+          <div class="cw" style="height:200px"><canvas id="spendChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="sec">By Category</div>
+          <div class="cw" style="height:170px"><canvas id="catPieChart"></canvas></div>
+          <div id="cat-legend" class="legend-list"></div>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Recent Transactions</div>
+          <div id="recent-txns"></div>
+        </div>
+        <div class="card">
+          <div class="sec">UPI App Breakdown</div>
+          <div id="upi-dash"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NET WORTH PAGE ── -->
+    <div class="page" id="page-networth">
+      <div class="ph">
+        <div class="ph-title">Net Worth</div>
+        <div class="ph-sub">Assets minus liabilities · Total financial picture</div>
+      </div>
+      <div class="nw-card">
+        <div class="mc-label">Total Net Worth</div>
+        <div class="mc-val nw-big" id="nw-big">₹0</div>
+        <div class="nw-sub-line" id="nw-sub-line"></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Assets Breakdown</div>
+          <div class="cw" style="height:220px"><canvas id="nwDonut"></canvas></div>
+          <div id="nw-legend" class="legend-list" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
+          <div class="sec">Summary</div>
+          <div id="nw-summary"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">Monthly Savings Rate <span id="savings-rate-chip"></span></div>
+        <div class="cw" style="height:180px"><canvas id="savingsChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ── TRANSACTIONS PAGE ── -->
+    <div class="page" id="page-expenses">
+      <div class="ph">
+        <div class="ph-title">Transactions</div>
+        <div class="ph-sub">All UPI &amp; manual expenses</div>
+        <div class="ph-row">
+          <div class="tabs" id="exp-month-tabs"></div>
+          <button class="btn btn-gold btn-sm" onclick="go('add-expense', null)">+ Add</button>
+        </div>
+      </div>
+      <div class="mgrid" id="exp-metrics"></div>
+      <div class="card">
+        <div class="sec">
+          <span>All Transactions</span>
+          <select class="fs" style="width:140px; padding:4px 8px; font-size:12px"
+                  id="exp-cat-filter" onchange="renderExpenses()">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div id="exp-list"></div>
+      </div>
+    </div>
+
+    <!-- ── BUDGET PAGE ── -->
+    <div class="page" id="page-budget">
+      <div class="ph">
+        <div class="ph-title">Monthly Budget</div>
+        <div class="ph-sub">Track spending vs limits · <span id="budget-month"></span></div>
+        <div class="ph-row">
+          <button class="btn btn-gold btn-sm" onclick="openModal('set-budget')">Set Budgets</button>
+        </div>
+      </div>
+      <div class="mgrid" id="budget-metrics"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Category Progress</div>
+          <div id="budget-bars"></div>
+        </div>
+        <div class="card">
+          <div class="sec">Budget vs Actual</div>
+          <div class="cw" style="height:240px"><canvas id="budgetChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── UPI APPS PAGE ── -->
+    <div class="page" id="page-upi">
+      <div class="ph">
+        <div class="ph-title">UPI App Tracker</div>
+        <div class="ph-sub">Spending breakdown by payment app</div>
+      </div>
+      <div class="mgrid" id="upi-metrics"></div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Spend by App</div>
+          <div class="cw" style="height:240px"><canvas id="upiBarChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="sec">App Details</div>
+          <div id="upi-app-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec">Transactions by App</div>
+        <select class="fs" id="upi-filter" onchange="renderUPI()"
+                style="width:160px; margin-bottom:14px; font-size:12.5px; padding:6px 10px">
+          <option value="">All Apps</option>
+          <option>PhonePe</option>
+          <option>Google Pay</option>
+          <option>Paytm</option>
+          <option>Amazon Pay</option>
+          <option>BHIM</option>
+          <option>Other / Cash</option>
+        </select>
+        <div id="upi-txn-list"></div>
+      </div>
+    </div>
+
+    <!-- ── ADD EXPENSE PAGE ── -->
+    <div class="page" id="page-add-expense">
+      <div class="ph">
+        <div class="ph-title">Add Expense</div>
+        <div class="ph-sub">Log a new transaction — manual, SMS, or screenshot</div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchAddTab('manual', this)">✏ Manual</button>
+        <button class="tab" onclick="switchAddTab('sms', this)">📩 Parse SMS</button>
+        <button class="tab" onclick="switchAddTab('screenshot', this)">📷 Screenshot OCR</button>
+      </div>
+
+      <!-- Manual entry -->
+      <div id="add-manual" class="card">
+        <div class="sec">Quick Add</div>
+        <div class="frow">
+          <div class="fg">
+            <label class="fl">Amount (₹) *</label>
+            <input class="fi" id="m-amt" type="number" placeholder="500" inputmode="decimal">
+          </div>
+          <div class="fg">
+            <label class="fl">UPI App</label>
+            <select class="fs" id="m-upi">
+              <option>PhonePe</option><option>Google Pay</option>
+              <option>Paytm</option><option>Amazon Pay</option>
+              <option>BHIM</option><option>Other / Cash</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Description *</label>
+          <input class="fi" id="m-desc" placeholder="e.g. Groceries at DMart">
+        </div>
+        <div class="frow">
+          <div class="fg">
+            <label class="fl">Category</label>
+            <select class="fs" id="m-cat"></select>
+          </div>
+          <div class="fg">
+            <label class="fl">Date</label>
+            <input class="fi" id="m-date" type="date">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Merchant / Store (optional)</label>
+          <input class="fi" id="m-merchant" placeholder="e.g. DMart, Swiggy, Amazon">
+        </div>
+        <button class="btn btn-gold" onclick="addManualExpense()">Add Expense</button>
+      </div>
+
+      <!-- SMS parser -->
+      <div id="add-sms" class="card" style="display:none">
+        <div class="sec">Paste Bank SMS</div>
+        <p class="help-text">
+          Copy your bank SMS (HDFC, SBI, ICICI etc.) and paste it below.
+          We'll extract the amount, merchant, and date automatically.
+        </p>
+        <div class="fg">
+          <label class="fl">SMS Text</label>
+          <textarea class="sms-area" id="sms-text"
+            placeholder="e.g. INR 500.00 debited from A/c **1234 on 15-03-2026 for UPI/SWIGGY/9876543210@ybl. Avl Bal INR 12,450.00"></textarea>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="parseSMS()">Parse SMS</button>
+          <button class="btn btn-outline btn-sm" onclick="loadSMSSample()">Load Sample</button>
+        </div>
+        <div id="sms-result" style="display:none" class="card">
+          <div class="sec">Extracted Data — Confirm &amp; Save</div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Amount</label><input class="fi" id="sr-amt" type="number"></div>
+            <div class="fg">
+              <label class="fl">UPI App</label>
+              <select class="fs" id="sr-upi">
+                <option>PhonePe</option><option>Google Pay</option>
+                <option>Paytm</option><option>Amazon Pay</option>
+                <option>BHIM</option><option>Other / Cash</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg"><label class="fl">Description</label><input class="fi" id="sr-desc"></div>
+          <div class="frow">
+            <div class="fg"><label class="fl">Category</label><select class="fs" id="sr-cat"></select></div>
+            <div class="fg"><label class="fl">Date</label><input class="fi" id="sr-date" type="date"></div>
+          </div>
+          <button class="btn btn-gold" onclick="saveParsedSMS()">Save Expense</button>
+        </div>
+      </div>
+
+      <!-- Screenshot OCR -->
+      <div id="add-screenshot" class="card" style="display:none">
+        <div class="sec">Screenshot OCR (AI-powered)</div>
+        <p class="help-text">
+          Take a screenshot of your PhonePe / Google Pay / Paytm payment success screen
+          and upload it. Claude AI will read the amount and merchant automatically.
+        </p>
+        <div class="drop-zone" id="drop-zone"
+             onclick="document.getElementById('img-input').click()"
+             ondragover="event.preventDefault(); this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div class="drop-icon">📷</div>
+          <div class="drop-text">Click to upload or drag &amp; drop screenshot</div>
+          <div class="drop-sub">Supports PNG, JPG · PhonePe, GPay, Paytm, Amazon Pay</div>
+        </div>
+        <input type="file" id="img-input" accept="image/*" style="display:none"
+               onchange="handleImageUpload(event)">
+        <div id="ocr-preview" style="display:none; margin-top:14px">
+          <img id="ocr-img" style="max-width:100%; max-height:200px; border-radius:var(--radius-sm); margin-bottom:14px">
+          <div id="ocr-status" class="help-text"></div>
+          <div id="ocr-result" style="display:none">
+            <div class="frow">
+              <div class="fg"><label class="fl">Amount</label><input class="fi" id="ocr-amt" type="number"></div>
+              <div class="fg">
+                <label class="fl">UPI App</label>
+                <select class="fs" id="ocr-upi">
+                  <option>PhonePe</option><option>Google Pay</option>
+                  <option>Paytm</option><option>Amazon Pay</option>
+                  <option>BHIM</option><option>Other / Cash</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg"><label class="fl">Description</label><input class="fi" id="ocr-desc"></div>
+            <div class="frow">
+              <div class="fg"><label class="fl">Category</label><select class="fs" id="ocr-cat"></select></div>
+              <div class="fg"><label class="fl">Date</label><input class="fi" id="ocr-date" type="date"></div>
+            </div>
+            <button class="btn btn-gold" onclick="saveOCRExpense()">Save Expense</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIP PLANNER PAGE ── -->
+    <div class="page" id="page-sip">
+      <div class="ph">
+        <div class="ph-title">SIP Planner</div>
+        <div class="ph-sub">Monthly ₹<span id="sip-hdr">0</span> · <span id="sip-mode-hdr"></span></div>
+      </div>
+      <div class="mgrid" id="sip-metrics"></div>
+      <div class="g2">
+        <div class="card"><div class="sec">This Month's Allocation</div><div id="sip-list"></div></div>
+        <div class="card"><div class="sec">Distribution</div><div class="cw" style="height:220px"><canvas id="sipChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ── MUTUAL FUNDS PAGE ── -->
+    <div class="page" id="page-funds">
+      <div class="ph">
+        <div class="ph-title">Mutual Funds</div>
+        <div class="ph-sub">Core portfolio holdings</div>
+        <div class="ph-row">
+          <button class="btn btn-gold btn-sm" onclick="openModal('add-fund')">+ Add Fund</button>
+        </div>
+      </div>
+      <div class="card">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Fund</th><th>Value</th><th>Target</th>
+              <th>Actual</th><th>Deviation</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="funds-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── STOCKS PAGE ── -->
+    <div class="page" id="page-stocks">
+      <div class="ph">
+        <div class="ph-title">Dividend Stocks</div>
+        <div class="ph-sub">Ranked by most underweight</div>
+        <div class="ph-row">
+          <button class="btn btn-gold btn-sm" onclick="openModal('add-stock')">+ Add Stock</button>
+        </div>
+      </div>
+      <div class="mgrid" id="stocks-metrics"></div>
+      <div id="stocks-list"></div>
+    </div>
+
+    <!-- ── SETTINGS PAGE ── -->
+    <div class="page" id="page-settings">
+      <div class="ph">
+        <div class="ph-title">Settings</div>
+        <div class="ph-sub">Portfolio &amp; app configuration</div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="sec">Portfolio Config</div>
+          <div class="fg"><label class="fl">Monthly SIP (₹)</label><input class="fi" id="cfg-sip" type="number"></div>
+          <div class="fg"><label class="fl">Cash Available (₹)</label><input class="fi" id="cfg-cash" type="number"></div>
+          <div class="fg"><label class="fl">Next Review Date</label><input class="fi" id="cfg-review" type="date"></div>
+          <div class="fg"><label class="fl">Monthly Income (₹)</label><input class="fi" id="cfg-income" type="number" placeholder="50000"></div>
+          <button class="btn btn-gold" onclick="saveConfig()">Save Settings</button>
+        </div>
+        <div class="card">
+          <div class="sec">Rebalance Mode</div>
+          <div style="display:flex; gap:8px; margin-bottom:14px">
+            <button class="btn" id="mb-bal" onclick="setMode('balanced')">⚖ Balanced</button>
+            <button class="btn" id="mb-cor" onclick="setMode('correction')">🎯 Correction</button>
+          </div>
+          <div class="help-text" id="mode-desc"></div>
+          <div class="divider"></div>
+          <div class="sec">Custom Categories</div>
+          <div id="cat-list-settings" style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:6px"></div>
+          <div style="display:flex; gap:8px">
+            <input class="fi" id="new-cat-name" placeholder="New category name" style="flex:1">
+            <button class="btn btn-outline btn-sm" onclick="addCategory()">Add</button>
+          </div>
+          <div class="divider"></div>
+          <div class="sec">Danger Zone</div>
+          <button class="btn btn-danger" onclick="if(confirm('Reset ALL data permanently?')){resetAll()}">
+            🗑 Reset All Data
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /content -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════
+     FLOATING ACTION BUTTON
+════════════════════════════════════════ -->
+<button class="fab" onclick="go('add-expense', null)" title="Add Expense">+</button>
+
+<!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
+
+<!-- Add Fund -->
+<div class="overlay" id="modal-add-fund">
+  <div class="modal">
+    <div class="modal-title">Add Mutual Fund</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Fund Name</label><input class="fi" id="af-name" placeholder="Nifty 50 Index Fund"></div>
+      <div class="fg">
+        <label class="fl">Category</label>
+        <select class="fs" id="af-cat">
+          <option>Large Cap</option><option>Mid Cap</option><option>Small Cap</option>
+          <option>Flexi Cap</option><option>Debt</option><option>Hybrid</option>
+          <option>International</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Target %</label><input class="fi" id="af-target" type="number" placeholder="20"></div>
+      <div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="af-val" type="number" placeholder="50000"></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-outline" onclick="closeModal('add-fund')">Cancel</button>
+      <button class="btn btn-gold" onclick="addFund()">Add Fund</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Fund -->
+<div class="overlay" id="modal-edit-fund">
+  <div class="modal">
+    <div class="modal-title">Edit Fund</div>
+    <input type="hidden" id="ef-idx">
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="ef-name"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Target %</label><input class="fi" id="ef-target" type="number"></div>
+      <div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="ef-val" type="number"></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-danger btn-sm" onclick="delFund()">Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('edit-fund')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveFund()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Stock -->
+<div class="overlay" id="modal-add-stock">
+  <div class="modal">
+    <div class="modal-title">Add Dividend Stock</div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Stock Name</label><input class="fi" id="as-name" placeholder="HDFC Bank"></div>
+      <div class="fg">
+        <label class="fl">Sector</label>
+        <select class="fs" id="as-sector">
+          <option>Banking</option><option>FMCG</option><option>IT</option>
+          <option>Pharma</option><option>Energy</option><option>Auto</option>
+          <option>Infra</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Target %</label><input class="fi" id="as-target" type="number" placeholder="25"></div>
+      <div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="as-val" type="number" placeholder="20000"></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-outline" onclick="closeModal('add-stock')">Cancel</button>
+      <button class="btn btn-gold" onclick="addStock()">Add Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Stock -->
+<div class="overlay" id="modal-edit-stock">
+  <div class="modal">
+    <div class="modal-title">Edit Stock</div>
+    <input type="hidden" id="es-idx">
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="es-name"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Target %</label><input class="fi" id="es-target" type="number"></div>
+      <div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="es-val" type="number"></div>
+    </div>
+    <div class="mact">
+      <button class="btn btn-danger btn-sm" onclick="delStock()">Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('edit-stock')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveStock()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Set Budget -->
+<div class="overlay" id="modal-set-budget">
+  <div class="modal">
+    <div class="modal-title">Set Monthly Budgets</div>
+    <div id="budget-inputs"></div>
+    <div class="mact">
+      <button class="btn btn-outline" onclick="closeModal('set-budget')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveBudgets()">Save Budgets</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     JAVASCRIPT FILES (loaded at bottom)
+════════════════════════════════════════ -->
+<script src="js/state.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/expenses.js"></script>
+<script src="js/portfolio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
