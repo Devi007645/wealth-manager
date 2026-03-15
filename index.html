@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0f14">
+<title>WealthMgr</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#0c0e13;--surface:#141720;--surface2:#1b2030;--surface3:#222840;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --gold:#c9a84c;--gold2:#e8c97a;--gold-dim:rgba(201,168,76,0.12);
+  --text:#eeeae0;--text2:#8a93aa;--text3:#454d62;
+  --green:#3ecf8e;--green-bg:rgba(62,207,142,0.1);
+  --red:#f05252;--red-bg:rgba(240,82,82,0.1);
+  --blue:#4f8ef7;--blue-bg:rgba(79,142,247,0.1);
+  --purple:#9b6dff;--purple-bg:rgba(155,109,255,0.1);
+  --orange:#f97316;--orange-bg:rgba(249,115,22,0.1);
+  --teal:#22d3ee;--teal-bg:rgba(34,211,238,0.1);
+  --radius:14px;--radius-sm:8px;--radius-xs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── App shell ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.content{flex:1;overflow-y:auto;padding:28px 32px 80px}
+
+/* ── Sidebar ── */
+.logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}
+.logo-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);letter-spacing:.3px}
+.logo-tag{font-size:10px;color:var(--text3);letter-spacing:1.8px;text-transform:uppercase;margin-top:2px}
+.nav{padding:16px 10px;flex:1}
+.nav-sec{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:12px 10px 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13.5px;color:var(--text2);transition:all .18s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--gold-dim);color:var(--gold)}
+.nav-icon{width:16px;text-align:center;font-style:normal;font-size:14px}
+.nav-badge{margin-left:auto;background:var(--red-bg);color:var(--red);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
+
+/* sidebar footer */
+.sidebar-foot{padding:16px;border-top:1px solid var(--border)}
+.net-worth-label{font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+.net-worth-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);margin-top:3px}
+.nw-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ── Page header ── */
+.ph{margin-bottom:24px}
+.ph-title{font-family:'Playfair Display',serif;font-size:26px}
+.ph-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.ph-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:12px}
+
+/* ── Buttons ── */
+.btn{padding:8px 18px;border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;font-weight:500;transition:all .18s;display:inline-flex;align-items:center;gap:6px}
+.btn-gold{background:var(--gold);color:#1a1200}
+.btn-gold:hover{background:var(--gold2)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{background:var(--surface2);color:var(--text)}
+.btn-green{background:var(--green-bg);border:1px solid var(--green);color:var(--green)}
+.btn-danger{background:var(--red-bg);border:1px solid var(--red);color:var(--red)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px}
+.card+.card{margin-top:16px}
+
+/* ── Metric grid ── */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.mc-label{font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+.mc-val{font-family:'Playfair Display',serif;font-size:22px;margin-top:5px}
+.mc-sub{font-size:11px;color:var(--text2);margin-top:3px}
+
+/* ── Grids ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px}
+.g-wide{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ── Section title ── */
+.sec{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+
+/* ── Badges / chips ── */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.c-green{background:var(--green-bg);color:var(--green)}
+.c-red{background:var(--red-bg);color:var(--red)}
+.c-gold{background:var(--gold-dim);color:var(--gold)}
+.c-blue{background:var(--blue-bg);color:var(--blue)}
+.c-purple{background:var(--purple-bg);color:var(--purple)}
+.c-orange{background:var(--orange-bg);color:var(--orange)}
+.c-teal{background:var(--teal-bg);color:var(--teal)}
+
+/* ── Tables ── */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 12px;font-size:13.5px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surface2)}
+
+/* ── Bar ── */
+.bar-bg{background:var(--surface3);border-radius:4px;height:6px;width:100%}
+.bar-fill{height:6px;border-radius:4px;transition:width .4s}
+.bg-green{background:var(--green)}.bg-red{background:var(--red)}.bg-gold{background:var(--gold)}.bg-blue{background:var(--blue)}.bg-purple{background:var(--purple)}.bg-orange{background:var(--orange)}
+
+/* ── Chart wrap ── */
+.cw{position:relative;width:100%}
+
+/* ── Pages ── */
+.page{display:none;animation:fadeUp .22s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:26px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Playfair Display',serif;font-size:19px;margin-bottom:18px}
+
+/* ── Forms ── */
+.fg{margin-bottom:14px}
+.fl{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;letter-spacing:.4px}
+.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 13px;font-size:13.5px;color:var(--text);font-family:'DM Sans',sans-serif}
+.fi:focus{outline:none;border-color:var(--gold)}
+.fs{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 13px;font-size:13.5px;color:var(--text);font-family:'DM Sans',sans-serif;-webkit-appearance:none}
+.fs:focus{outline:none;border-color:var(--gold)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mact{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+
+/* ── Expense item ── */
+.exp-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:7px;background:var(--surface);transition:border-color .15s}
+.exp-item:hover{border-color:var(--border2)}
+.exp-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.exp-name{font-size:13.5px;font-weight:500}
+.exp-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.exp-amt{font-size:15px;font-weight:600;color:var(--red);white-space:nowrap}
+.exp-upi{font-size:10px;color:var(--text3);margin-top:1px;text-align:right}
+
+/* ── UPI app pill ── */
+.upi-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+
+/* ── Budget bar ── */
+.budget-item{margin-bottom:16px}
+.bi-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bi-pct{font-size:11px;color:var(--text3)}
+
+/* ── Quick add FAB ── */
+.fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:#1a1200;font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,.4);z-index:200;border:none;font-family:'DM Sans',sans-serif;transition:all .2s}
+.fab:hover{background:var(--gold2);transform:scale(1.08)}
+.fab:active{transform:scale(.96)}
+
+/* ── SMS parser area ── */
+.sms-area{width:100%;min-height:100px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 13px;font-size:12.5px;color:var(--text2);font-family:'DM Sans',sans-serif;resize:vertical}
+.sms-area:focus{outline:none;border-color:var(--gold)}
+
+/* ── Screenshot drop zone ── */
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold);background:var(--gold-dim)}
+.drop-icon{font-size:32px;margin-bottom:8px}
+.drop-text{font-size:13px;color:var(--text2)}
+.drop-sub{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:3px;background:var(--surface2);border-radius:var(--radius-sm);padding:3px;margin-bottom:18px;width:fit-content}
+.tab{padding:6px 16px;border-radius:6px;font-size:12.5px;cursor:pointer;color:var(--text2);transition:all .18s;border:none;background:none;font-family:'DM Sans',sans-serif}
+.tab.active{background:var(--surface);color:var(--text)}
+
+/* ── Net worth card ── */
+.nw-card{background:linear-gradient(135deg,var(--surface) 0%,rgba(201,168,76,.07) 100%);border:1px solid rgba(201,168,76,.25);border-radius:var(--radius);padding:22px}
+
+/* ── Divider ── */
+.div{height:1px;background:var(--border);margin:16px 0}
+
+/* ── Category color dots ── */
+.cat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* ── Responsive ── */
+@media(max-width:820px){
+  .sidebar{width:56px}
+  .sidebar .logo-name,.sidebar .logo-tag,.nav-item span:not(.nav-icon),.nav-sec,.sidebar-foot{display:none}
+  .content{padding:16px 14px 80px}
+  .g2,.g3,.g-wide{grid-template-columns:1fr}
+  .mgrid{grid-template-columns:1fr 1fr}
+  .frow{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .mgrid{grid-template-columns:1fr 1fr}
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-name">WealthMgr</div>
+    <div class="logo-tag">Portfolio OS</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Overview</div>
+    <button class="nav-item active" onclick="go('dashboard',this)"><i class="nav-icon">◈</i><span>Dashboard</span></button>
+    <button class="nav-item" onclick="go('networth',this)"><i class="nav-icon">◎</i><span>Net Worth</span></button>
+
+    <div class="nav-sec">Expenses</div>
+    <button class="nav-item" onclick="go('expenses',this)"><i class="nav-icon">↯</i><span>Transactions</span><span class="nav-badge" id="nb-new" style="display:none">New</span></button>
+    <button class="nav-item" onclick="go('budget',this)"><i class="nav-icon">▣</i><span>Budget</span></button>
+    <button class="nav-item" onclick="go('upi',this)"><i class="nav-icon">⟳</i><span>UPI Apps</span></button>
+    <button class="nav-item" onclick="go('add-expense',this)"><i class="nav-icon">⊕</i><span>Add Expense</span></button>
+
+    <div class="nav-sec">Portfolio</div>
+    <button class="nav-item" onclick="go('sip',this)"><i class="nav-icon">↻</i><span>SIP Planner</span></button>
+    <button class="nav-item" onclick="go('funds',this)"><i class="nav-icon">▦</i><span>Mutual Funds</span></button>
+    <button class="nav-item" onclick="go('stocks',this)"><i class="nav-icon">▲</i><span>Stocks</span></button>
+
+    <div class="nav-sec">Setup</div>
+    <button class="nav-item" onclick="go('settings',this)"><i class="nav-icon">⚙</i><span>Settings</span></button>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="net-worth-label">Net Worth</div>
+    <div class="net-worth-val" id="sb-nw">₹0</div>
+    <div class="nw-sub" id="sb-nw-sub">Loading...</div>
+  </div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div class="content">
+
+<!-- ── DASHBOARD ── -->
+<div class="page active" id="page-dashboard">
+  <div class="ph">
+    <div class="ph-title">Dashboard</div>
+    <div class="ph-sub" id="dash-date"></div>
+    <div class="ph-row">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="go('add-expense',null)">+ Add Expense</button>
+        <button class="btn btn-outline" onclick="go('funds',null)">Manage Portfolio</button>
+      </div>
+    </div>
+  </div>
+  <div class="mgrid" id="dash-metrics"></div>
+  <div class="g3">
+    <div class="card">
+      <div class="sec">Spending This Month</div>
+      <div class="cw" style="height:200px"><canvas id="spendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="sec">By Category</div>
+      <div class="cw" style="height:170px"><canvas id="catPieChart"></canvas></div>
+      <div id="cat-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec">Recent Transactions</div>
+      <div id="recent-txns"></div>
+    </div>
+    <div class="card">
+      <div class="sec">UPI App Breakdown</div>
+      <div id="upi-dash"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NET WORTH ── -->
+<div class="page" id="page-networth">
+  <div class="ph"><div class="ph-title">Net Worth</div><div class="ph-sub">Assets minus liabilities · Total financial picture</div></div>
+  <div class="nw-card" style="margin-bottom:16px">
+    <div style="font-size:11px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase">Total Net Worth</div>
+    <div class="mc-val" style="font-size:36px;margin-top:8px" id="nw-big">₹0</div>
+    <div style="font-size:13px;color:var(--text2);margin-top:6px" id="nw-sub-line"></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec">Assets Breakdown</div>
+      <div class="cw" style="height:220px"><canvas id="nwDonut"></canvas></div>
+      <div id="nw-legend" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div class="card">
+      <div class="sec">Summary</div>
+      <div id="nw-summary"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec">Monthly Savings Rate <span id="savings-rate-chip"></span></div>
+    <div class="cw" style="height:180px"><canvas id="savingsChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ── EXPENSES / TRANSACTIONS ── -->
+<div class="page" id="page-expenses">
+  <div class="ph">
+    <div class="ph-title">Transactions</div>
+    <div class="ph-sub">All UPI & manual expenses</div>
+    <div class="ph-row">
+      <div class="tabs" id="exp-month-tabs"></div>
+      <button class="btn btn-gold btn-sm" onclick="go('add-expense',null)">+ Add</button>
+    </div>
+  </div>
+  <div class="mgrid" id="exp-metrics"></div>
+  <div class="card">
+    <div class="sec">
+      <span>All Transactions</span>
+      <select class="fs" style="width:140px;padding:4px 8px;font-size:12px" id="exp-cat-filter" onchange="renderExpenses()">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+    <div id="exp-list"></div>
+  </div>
+</div>
+
+<!-- ── BUDGET ── -->
+<div class="page" id="page-budget">
+  <div class="ph">
+    <div class="ph-title">Monthly Budget</div>
+    <div class="ph-sub">Track spending vs limits · <span id="budget-month"></span></div>
+    <div class="ph-row">
+      <button class="btn btn-gold btn-sm" onclick="openModal('set-budget')">Set Budgets</button>
+    </div>
+  </div>
+  <div class="mgrid" id="budget-metrics"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec">Category Progress</div>
+      <div id="budget-bars"></div>
+    </div>
+    <div class="card">
+      <div class="sec">Budget vs Actual</div>
+      <div class="cw" style="height:240px"><canvas id="budgetChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── UPI APPS ── -->
+<div class="page" id="page-upi">
+  <div class="ph">
+    <div class="ph-title">UPI App Tracker</div>
+    <div class="ph-sub">Spending breakdown by payment app</div>
+  </div>
+  <div class="mgrid" id="upi-metrics"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec">Spend by App</div>
+      <div class="cw" style="height:240px"><canvas id="upiBarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="sec">App Details</div>
+      <div id="upi-app-list"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="sec">Transactions by App</div>
+    <select class="fs" style="width:160px;margin-bottom:14px;font-size:12.5px;padding:6px 10px" id="upi-filter" onchange="renderUPI()">
+      <option value="">All Apps</option>
+      <option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Amazon Pay</option><option>BHIM</option><option>Other</option>
+    </select>
+    <div id="upi-txn-list"></div>
+  </div>
+</div>
+
+<!-- ── ADD EXPENSE ── -->
+<div class="page" id="page-add-expense">
+  <div class="ph"><div class="ph-title">Add Expense</div><div class="ph-sub">Log a new transaction — manual, SMS, or screenshot</div></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchAddTab('manual',this)">✏ Manual</button>
+    <button class="tab" onclick="switchAddTab('sms',this)">📩 Parse SMS</button>
+    <button class="tab" onclick="switchAddTab('screenshot',this)">📷 Screenshot OCR</button>
+  </div>
+
+  <!-- Manual tab -->
+  <div id="add-manual" class="card">
+    <div class="sec">Quick Add</div>
+    <div class="frow">
+      <div class="fg">
+        <label class="fl">Amount (₹) *</label>
+        <input class="fi" id="m-amt" type="number" placeholder="500" inputmode="decimal">
+      </div>
+      <div class="fg">
+        <label class="fl">UPI App</label>
+        <select class="fs" id="m-upi">
+          <option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Amazon Pay</option><option>BHIM</option><option>Other / Cash</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Description *</label>
+      <input class="fi" id="m-desc" placeholder="e.g. Groceries at DMart">
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label class="fl">Category</label>
+        <select class="fs" id="m-cat"></select>
+      </div>
+      <div class="fg">
+        <label class="fl">Date</label>
+        <input class="fi" id="m-date" type="date">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Merchant / Store (optional)</label>
+      <input class="fi" id="m-merchant" placeholder="e.g. DMart, Swiggy, Amazon">
+    </div>
+    <button class="btn btn-gold" onclick="addManualExpense()">Add Expense</button>
+  </div>
+
+  <!-- SMS tab -->
+  <div id="add-sms" class="card" style="display:none">
+    <div class="sec">Paste Bank SMS</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">Copy your bank SMS (e.g. from HDFC, SBI, ICICI) and paste it below. We'll extract the amount, merchant, and date automatically.</p>
+    <div class="fg">
+      <label class="fl">SMS Text</label>
+      <textarea class="sms-area" id="sms-text" placeholder="e.g. INR 500.00 debited from A/c **1234 on 15-03-2026 for UPI/SWIGGY/9876543210@ybl. Avl Bal INR 12,450.00"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="parseSMS()">Parse SMS</button>
+      <button class="btn btn-outline btn-sm" onclick="loadSMSSample()">Load Sample</button>
+    </div>
+    <div id="sms-result" style="display:none" class="card" style="background:var(--surface2)">
+      <div class="sec">Extracted Data — Confirm & Save</div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Amount</label><input class="fi" id="sr-amt" type="number"></div>
+        <div class="fg"><label class="fl">UPI App</label><select class="fs" id="sr-upi"><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Amazon Pay</option><option>BHIM</option><option>Other / Cash</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Description</label><input class="fi" id="sr-desc"></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Category</label><select class="fs" id="sr-cat"></select></div>
+        <div class="fg"><label class="fl">Date</label><input class="fi" id="sr-date" type="date"></div>
+      </div>
+      <button class="btn btn-gold" onclick="saveParsedSMS()">Save Expense</button>
+    </div>
+  </div>
+
+  <!-- Screenshot tab -->
+  <div id="add-screenshot" class="card" style="display:none">
+    <div class="sec">Screenshot OCR (AI-powered)</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">Take a screenshot of your PhonePe / Google Pay / Paytm payment success screen and upload it. Claude AI will read the amount and merchant.</p>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('img-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+      <div class="drop-icon">📷</div>
+      <div class="drop-text">Click to upload or drag & drop screenshot</div>
+      <div class="drop-sub">Supports PNG, JPG, JPEG · PhonePe, GPay, Paytm, Amazon Pay</div>
+    </div>
+    <input type="file" id="img-input" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+    <div id="ocr-preview" style="display:none;margin-top:14px">
+      <img id="ocr-img" style="max-width:100%;max-height:200px;border-radius:var(--radius-sm);margin-bottom:14px">
+      <div id="ocr-status" style="font-size:13px;color:var(--text2);margin-bottom:12px"></div>
+      <div id="ocr-result" style="display:none">
+        <div class="frow">
+          <div class="fg"><label class="fl">Amount</label><input class="fi" id="ocr-amt" type="number"></div>
+          <div class="fg"><label class="fl">UPI App</label><select class="fs" id="ocr-upi"><option>PhonePe</option><option>Google Pay</option><option>Paytm</option><option>Amazon Pay</option><option>BHIM</option><option>Other / Cash</option></select></div>
+        </div>
+        <div class="fg"><label class="fl">Description</label><input class="fi" id="ocr-desc"></div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Category</label><select class="fs" id="ocr-cat"></select></div>
+          <div class="fg"><label class="fl">Date</label><input class="fi" id="ocr-date" type="date"></div>
+        </div>
+        <button class="btn btn-gold" onclick="saveOCRExpense()">Save Expense</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SIP PLANNER ── -->
+<div class="page" id="page-sip">
+  <div class="ph"><div class="ph-title">SIP Planner</div><div class="ph-sub">Monthly ₹<span id="sip-hdr">0</span> · <span id="sip-mode-hdr"></span></div></div>
+  <div class="mgrid" id="sip-metrics"></div>
+  <div class="g2">
+    <div class="card"><div class="sec">This Month's Allocation</div><div id="sip-list"></div></div>
+    <div class="card"><div class="sec">Distribution</div><div class="cw" style="height:220px"><canvas id="sipChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ── MUTUAL FUNDS ── -->
+<div class="page" id="page-funds">
+  <div class="ph"><div class="ph-title">Mutual Funds</div><div class="ph-sub">Core portfolio</div>
+    <div class="ph-row"><button class="btn btn-gold btn-sm" onclick="openModal('add-fund')">+ Add Fund</button></div>
+  </div>
+  <div class="card"><table class="tbl"><thead><tr><th>Fund</th><th>Value</th><th>Target</th><th>Actual</th><th>Deviation</th><th></th></tr></thead><tbody id="funds-body"></tbody></table></div>
+</div>
+
+<!-- ── STOCKS ── -->
+<div class="page" id="page-stocks">
+  <div class="ph"><div class="ph-title">Dividend Stocks</div><div class="ph-sub">Ranked by most underweight</div>
+    <div class="ph-row"><button class="btn btn-gold btn-sm" onclick="openModal('add-stock')">+ Add Stock</button></div>
+  </div>
+  <div class="mgrid" id="stocks-metrics"></div>
+  <div id="stocks-list"></div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div class="page" id="page-settings">
+  <div class="ph"><div class="ph-title">Settings</div><div class="ph-sub">Portfolio & app configuration</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="sec">Portfolio Config</div>
+      <div class="fg"><label class="fl">Monthly SIP (₹)</label><input class="fi" id="cfg-sip" type="number"></div>
+      <div class="fg"><label class="fl">Cash Available (₹)</label><input class="fi" id="cfg-cash" type="number"></div>
+      <div class="fg"><label class="fl">Next Review Date</label><input class="fi" id="cfg-review" type="date"></div>
+      <div class="fg"><label class="fl">Monthly Income (₹) — for savings rate</label><input class="fi" id="cfg-income" type="number" placeholder="50000"></div>
+      <button class="btn btn-gold" onclick="saveConfig()">Save Settings</button>
+    </div>
+    <div class="card">
+      <div class="sec">Rebalance Mode</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn" id="mb-bal" onclick="setMode('balanced')">⚖ Balanced</button>
+        <button class="btn" id="mb-cor" onclick="setMode('correction')">🎯 Correction</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6" id="mode-desc"></div>
+      <div class="div"></div>
+      <div class="sec">Categories</div>
+      <div id="cat-list-settings" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="new-cat-name" placeholder="New category name" style="flex:1">
+        <button class="btn btn-outline btn-sm" onclick="addCategory()">Add</button>
+      </div>
+      <div class="div"></div>
+      <div class="sec">Danger Zone</div>
+      <button class="btn btn-danger" onclick="if(confirm('Reset ALL data?')){resetAll()}">🗑 Reset All Data</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<!-- FAB -->
+<button class="fab" onclick="go('add-expense',null)" title="Add Expense">+</button>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add Fund -->
+<div class="overlay" id="modal-add-fund">
+  <div class="modal">
+    <div class="modal-title">Add Mutual Fund</div>
+    <div class="frow"><div class="fg"><label class="fl">Fund Name</label><input class="fi" id="af-name" placeholder="Nifty 50 Index Fund"></div><div class="fg"><label class="fl">Category</label><select class="fs" id="af-cat"><option>Large Cap</option><option>Mid Cap</option><option>Small Cap</option><option>Flexi Cap</option><option>Debt</option><option>Hybrid</option><option>International</option><option>Other</option></select></div></div>
+    <div class="frow"><div class="fg"><label class="fl">Target %</label><input class="fi" id="af-target" type="number" placeholder="20"></div><div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="af-val" type="number" placeholder="50000"></div></div>
+    <div class="mact"><button class="btn btn-outline" onclick="closeModal('add-fund')">Cancel</button><button class="btn btn-gold" onclick="addFund()">Add Fund</button></div>
+  </div>
+</div>
+
+<!-- Edit Fund -->
+<div class="overlay" id="modal-edit-fund">
+  <div class="modal">
+    <div class="modal-title">Edit Fund</div>
+    <input type="hidden" id="ef-idx">
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="ef-name"></div>
+    <div class="frow"><div class="fg"><label class="fl">Target %</label><input class="fi" id="ef-target" type="number"></div><div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="ef-val" type="number"></div></div>
+    <div class="mact"><button class="btn btn-danger btn-sm" onclick="delFund()">Delete</button><button class="btn btn-outline" onclick="closeModal('edit-fund')">Cancel</button><button class="btn btn-gold" onclick="saveFund()">Save</button></div>
+  </div>
+</div>
+
+<!-- Add Stock -->
+<div class="overlay" id="modal-add-stock">
+  <div class="modal">
+    <div class="modal-title">Add Dividend Stock</div>
+    <div class="frow"><div class="fg"><label class="fl">Stock Name</label><input class="fi" id="as-name" placeholder="HDFC Bank"></div><div class="fg"><label class="fl">Sector</label><select class="fs" id="as-sector"><option>Banking</option><option>FMCG</option><option>IT</option><option>Pharma</option><option>Energy</option><option>Auto</option><option>Infra</option><option>Other</option></select></div></div>
+    <div class="frow"><div class="fg"><label class="fl">Target %</label><input class="fi" id="as-target" type="number" placeholder="25"></div><div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="as-val" type="number" placeholder="20000"></div></div>
+    <div class="mact"><button class="btn btn-outline" onclick="closeModal('add-stock')">Cancel</button><button class="btn btn-gold" onclick="addStock()">Add Stock</button></div>
+  </div>
+</div>
+
+<!-- Edit Stock -->
+<div class="overlay" id="modal-edit-stock">
+  <div class="modal">
+    <div class="modal-title">Edit Stock</div>
+    <input type="hidden" id="es-idx">
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="es-name"></div>
+    <div class="frow"><div class="fg"><label class="fl">Target %</label><input class="fi" id="es-target" type="number"></div><div class="fg"><label class="fl">Current Value (₹)</label><input class="fi" id="es-val" type="number"></div></div>
+    <div class="mact"><button class="btn btn-danger btn-sm" onclick="delStock()">Delete</button><button class="btn btn-outline" onclick="closeModal('edit-stock')">Cancel</button><button class="btn btn-gold" onclick="saveStock()">Save</button></div>
+  </div>
+</div>
+
+<!-- Set Budget -->
+<div class="overlay" id="modal-set-budget">
+  <div class="modal">
+    <div class="modal-title">Set Monthly Budgets</div>
+    <div id="budget-inputs"></div>
+    <div class="mact"><button class="btn btn-outline" onclick="closeModal('set-budget')">Cancel</button><button class="btn btn-gold" onclick="saveBudgets()">Save Budgets</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const CAT_COLORS = {
+  'Food & Dining':'#f97316','Groceries':'#22d3ee','Shopping':'#9b6dff',
+  'Transport':'#4f8ef7','Entertainment':'#f05252','Health':'#3ecf8e',
+  'Utilities':'#c9a84c','Education':'#e8c97a','Travel':'#a78bfa',
+  'Retail':'#fb923c','Fuel':'#60a5fa','Recharge':'#34d399','Other':'#8a93aa'
+};
+const UPI_COLORS = {'PhonePe':'#5f259f','Google Pay':'#4285f4','Paytm':'#00baf2','Amazon Pay':'#ff9900','BHIM':'#00b9f1','Other / Cash':'#8a93aa'};
+
+let S = {
+  sip:30000, cash:0, mode:'balanced', reviewDate:'', income:60000,
+  funds:[
+    {name:'Nifty 50 Index Fund',category:'Large Cap',target:30,value:145000},
+    {name:'Parag Parikh Flexi Cap',category:'Flexi Cap',target:25,value:112000},
+    {name:'Mirae Asset Mid Cap',category:'Mid Cap',target:20,value:78000},
+    {name:'Axis Small Cap Fund',category:'Small Cap',target:15,value:52000},
+    {name:'HDFC Hybrid Equity',category:'Hybrid',target:10,value:31000},
+  ],
+  stocks:[
+    {name:'HDFC Bank',sector:'Banking',target:35,value:28000},
+    {name:'ITC Ltd',sector:'FMCG',target:25,value:22000},
+    {name:'Infosys',sector:'IT',target:20,value:14000},
+    {name:'Coal India',sector:'Energy',target:20,value:8000},
+  ],
+  expenses:[
+    {id:1,amt:450,desc:'Swiggy Order',cat:'Food & Dining',upi:'Google Pay',merchant:'Swiggy',date:'2026-03-14'},
+    {id:2,amt:1200,desc:'Big Basket Groceries',cat:'Groceries',upi:'PhonePe',merchant:'Big Basket',date:'2026-03-13'},
+    {id:3,amt:299,desc:'Netflix Subscription',cat:'Entertainment',upi:'Amazon Pay',merchant:'Netflix',date:'2026-03-12'},
+    {id:4,amt:2500,desc:'Decathlon Shopping',cat:'Shopping',upi:'PhonePe',merchant:'Decathlon',date:'2026-03-11'},
+    {id:5,amt:85,desc:'Auto Rickshaw',cat:'Transport',upi:'Google Pay',merchant:'Local',date:'2026-03-10'},
+    {id:6,amt:500,desc:'Medical Store',cat:'Health',upi:'Paytm',merchant:'Apollo Pharmacy',date:'2026-03-09'},
+    {id:7,amt:1800,desc:'Electricity Bill',cat:'Utilities',upi:'PhonePe',merchant:'BESCOM',date:'2026-03-08'},
+    {id:8,amt:350,desc:'Petrol',cat:'Fuel',upi:'BHIM',merchant:'HP Petrol Pump',date:'2026-03-07'},
+    {id:9,amt:699,desc:'Zomato Order',cat:'Food & Dining',upi:'Google Pay',merchant:'Zomato',date:'2026-03-06'},
+    {id:10,amt:3200,desc:'Reliance Retail',cat:'Retail',upi:'PhonePe',merchant:'Reliance Smart',date:'2026-03-05'},
+  ],
+  budgets:{'Food & Dining':2000,'Groceries':3000,'Shopping':4000,'Transport':1500,'Entertainment':1000,'Health':2000,'Utilities':2500,'Fuel':1000,'Other':2000},
+  categories:['Food & Dining','Groceries','Shopping','Transport','Entertainment','Health','Utilities','Education','Travel','Retail','Fuel','Recharge','Other'],
+  nextId:11
+};
+
+function load(){const d=localStorage.getItem('wmv2');if(d){try{S=JSON.parse(d)}catch(e){}}}
+function save(){localStorage.setItem('wmv2',JSON.stringify(S))}
+function resetAll(){localStorage.removeItem('wmv2');location.reload()}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPUTED
+// ═══════════════════════════════════════════════════════════════
+const totalFunds=()=>S.funds.reduce((s,f)=>s+(+f.value||0),0);
+const totalStocks=()=>S.stocks.reduce((s,f)=>s+(+f.value||0),0);
+const totalPortfolio=()=>totalFunds()+totalStocks();
+const fundActual=f=>{const t=totalFunds();return t?f.value/t*100:0};
+const stockActual=s=>{const t=totalStocks();return t?s.value/t*100:0};
+
+function thisMonthExpenses(){
+  const now=new Date();
+  return S.expenses.filter(e=>{
+    const d=new Date(e.date);
+    return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+  });
+}
+function monthExpenses(yr,mo){
+  return S.expenses.filter(e=>{const d=new Date(e.date);return d.getFullYear()===yr&&d.getMonth()===mo});
+}
+function totalSpendMonth(){return thisMonthExpenses().reduce((s,e)=>s+(+e.amt||0),0)}
+function netWorth(){return totalPortfolio()-0} // could subtract liabilities
+
+function catSpend(exps){
+  const m={};
+  exps.forEach(e=>{m[e.cat]=(m[e.cat]||0)+(+e.amt||0)});
+  return m;
+}
+function upiSpend(exps){
+  const m={};
+  exps.forEach(e=>{m[e.upi]=(m[e.upi]||0)+(+e.amt||0)});
+  return m;
+}
+
+function availableMonths(){
+  const set=new Set(S.expenses.map(e=>e.date.slice(0,7)));
+  return [...set].sort().reverse().slice(0,6);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════════════════════════
+const fmt=n=>'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
+const pct=n=>n.toFixed(1)+'%';
+const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d){const dt=new Date(d);return dt.getDate()+' '+MONTH_NAMES[dt.getMonth()]}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════════
+const charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id]}}
+
+function mkLineChart(id,labels,data,color='#c9a84c'){
+  destroyChart(id);
+  const ctx=document.getElementById(id);if(!ctx)return;
+  charts[id]=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:color,backgroundColor:color+'18',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:color,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed.y.toLocaleString('en-IN')}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}}}});
+}
+
+function mkDoughnut(id,labels,data,colors){
+  destroyChart(id);
+  const ctx=document.getElementById(id);if(!ctx)return;
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': ₹'+c.parsed.toLocaleString('en-IN')}}}}});
+}
+
+function mkBarChart(id,labels,data,colors,horizontal=false){
+  destroyChart(id);
+  const ctx=document.getElementById(id);if(!ctx)return;
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:5,borderWidth:0}]},options:{indexAxis:horizontal?'y':'x',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed[horizontal?'x':'y'].toLocaleString('en-IN')}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderDashboard(){
+  const now=new Date();
+  document.getElementById('dash-date').textContent=now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const portfolio=totalPortfolio();
+  const monthSpend=totalSpendMonth();
+  const nw=netWorth();
+  const income=S.income||0;
+  const savings=income-monthSpend;
+  const savingsRate=income?Math.round(savings/income*100):0;
+
+  // update sidebar
+  document.getElementById('sb-nw').textContent=fmt(nw+portfolio);
+  document.getElementById('sb-nw-sub').textContent=`Portfolio ${fmt(portfolio)} · Spend ${fmt(monthSpend)}`;
+
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Portfolio Value</div><div class="mc-val">${fmt(portfolio)}</div><div class="mc-sub">${S.funds.length} funds · ${S.stocks.length} stocks</div></div>
+    <div class="mc"><div class="mc-label">This Month Spent</div><div class="mc-val" style="color:var(--red)">${fmt(monthSpend)}</div><div class="mc-sub">${thisMonthExpenses().length} transactions</div></div>
+    <div class="mc"><div class="mc-label">Monthly Savings</div><div class="mc-val" style="color:${savings>=0?'var(--green)':'var(--red)'}">${fmt(savings)}</div><div class="mc-sub">Savings rate ${savingsRate}%</div></div>
+    <div class="mc"><div class="mc-label">Net Worth</div><div class="mc-val" style="color:var(--gold)">${fmt(nw+portfolio)}</div><div class="mc-sub">Investments + cash</div></div>
+  `;
+
+  // spending by day this month
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const dayLabels=[],dayData=[];
+  for(let d=1;d<=Math.min(now.getDate(),daysInMonth);d++){
+    const ds=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    dayLabels.push(d);
+    dayData.push(S.expenses.filter(e=>e.date===ds).reduce((s,e)=>s+(+e.amt||0),0));
+  }
+  mkLineChart('spendChart',dayLabels,dayData,'#f05252');
+
+  // category pie
+  const cats=catSpend(thisMonthExpenses());
+  const catKeys=Object.keys(cats).filter(k=>cats[k]>0);
+  mkDoughnut('catPieChart',catKeys,catKeys.map(k=>cats[k]),catKeys.map(k=>CAT_COLORS[k]||'#8a93aa'));
+  const total=Object.values(cats).reduce((a,b)=>a+b,0);
+  document.getElementById('cat-legend').innerHTML=catKeys.slice(0,5).map(k=>`
+    <div style="display:flex;align-items:center;gap:7px;font-size:12px">
+      <div class="cat-dot" style="background:${CAT_COLORS[k]||'#8a93aa'}"></div>
+      <span style="flex:1;color:var(--text2)">${k}</span>
+      <span style="font-weight:500">${total?pct(cats[k]/total*100):'0%'}</span>
+    </div>`).join('');
+
+  // recent txns
+  const recent=[...S.expenses].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  document.getElementById('recent-txns').innerHTML=recent.length?recent.map(e=>expRow(e)).join(''):'<div style="font-size:13px;color:var(--text3);padding:8px 0">No expenses yet</div>';
+
+  // upi dash
+  const upi=upiSpend(thisMonthExpenses());
+  const upiKeys=Object.keys(upi).sort((a,b)=>upi[b]-upi[a]);
+  const upiMax=Math.max(...Object.values(upi),1);
+  document.getElementById('upi-dash').innerHTML=upiKeys.map(k=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+        <span style="color:var(--text)">${k}</span>
+        <span style="font-weight:500">${fmt(upi[k])}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${upi[k]/upiMax*100}%;background:${UPI_COLORS[k]||'#8a93aa'}"></div></div>
+    </div>`).join('')||'<div style="font-size:13px;color:var(--text3)">No data yet</div>';
+}
+
+function expRow(e){
+  const col=CAT_COLORS[e.cat]||'#8a93aa';
+  return `<div class="exp-item">
+    <div class="exp-icon" style="background:${col}18;color:${col}">${catEmoji(e.cat)}</div>
+    <div style="flex:1;min-width:0">
+      <div class="exp-name">${e.desc}</div>
+      <div class="exp-meta">${e.cat} · ${fmtDate(e.date)}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div class="exp-amt">-${fmt(e.amt)}</div>
+      <div class="exp-upi">${e.upi}</div>
+    </div>
+  </div>`;
+}
+
+function catEmoji(cat){
+  const m={'Food & Dining':'🍽','Groceries':'🛒','Shopping':'🛍','Transport':'🚗','Entertainment':'🎬','Health':'💊','Utilities':'⚡','Education':'📚','Travel':'✈','Retail':'🏪','Fuel':'⛽','Recharge':'📱','Other':'💸'};
+  return m[cat]||'💸';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NET WORTH
+// ═══════════════════════════════════════════════════════════════
+function renderNetWorth(){
+  const pv=totalPortfolio();
+  const cash=S.cash||0;
+  const total=pv+cash;
+  const monthSpend=totalSpendMonth();
+  const income=S.income||0;
+  const savings=income-monthSpend;
+  const savingsRate=income?Math.round(savings/income*100):0;
+
+  document.getElementById('nw-big').textContent=fmt(total);
+  document.getElementById('nw-sub-line').textContent=`Portfolio ${fmt(pv)} + Cash ${fmt(cash)}`;
+
+  const segments=['Mutual Funds','Dividend Stocks','Cash Available'];
+  const vals=[totalFunds(),totalStocks(),cash];
+  const cols=['#c9a84c','#4f8ef7','#3ecf8e'];
+  mkDoughnut('nwDonut',segments,vals,cols);
+  document.getElementById('nw-legend').innerHTML=segments.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+      <div class="cat-dot" style="background:${cols[i]}"></div>
+      <span style="flex:1;color:var(--text2)">${s}</span>
+      <span style="font-weight:500">${fmt(vals[i])}</span>
+      <span style="color:var(--text3);font-size:11px">${total?pct(vals[i]/total*100):'0%'}</span>
+    </div>`).join('');
+
+  document.getElementById('nw-summary').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:14px">
+      ${[['Total Investments',fmt(pv),'var(--gold)'],['Mutual Funds',fmt(totalFunds()),'var(--text)'],['Dividend Stocks',fmt(totalStocks()),'var(--text)'],['Cash Available',fmt(cash),'var(--text)'],['Monthly Income',fmt(income),'var(--text)'],['Monthly Spend',fmt(monthSpend),'var(--red)'],['Monthly Savings',fmt(savings),savings>=0?'var(--green)':'var(--red)'],['Savings Rate',savingsRate+'%',savingsRate>=20?'var(--green)':'var(--orange)']].map(([l,v,c])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px">
+          <span style="color:var(--text2)">${l}</span>
+          <span style="font-weight:500;color:${c}">${v}</span>
+        </div>`).join('')}
+    </div>`;
+
+  document.getElementById('savings-rate-chip').innerHTML=`<span class="chip ${savingsRate>=20?'c-green':savingsRate>=10?'c-gold':'c-red'}">${savingsRate}% savings rate</span>`;
+
+  // last 6 months savings
+  const months=[];const incomeData=[];const spendData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date();d.setMonth(d.getMonth()-i);
+    months.push(MONTH_NAMES[d.getMonth()]);
+    const exps=monthExpenses(d.getFullYear(),d.getMonth());
+    const sp=exps.reduce((s,e)=>s+(+e.amt||0),0);
+    spendData.push(sp);
+    incomeData.push(income);
+  }
+  destroyChart('savingsChart');
+  const ctx=document.getElementById('savingsChart');if(!ctx)return;
+  charts['savingsChart']=new Chart(ctx,{type:'bar',data:{labels:months,datasets:[{label:'Income',data:incomeData,backgroundColor:'rgba(62,207,142,0.3)',borderRadius:4},{label:'Spend',data:spendData,backgroundColor:'rgba(240,82,82,0.5)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPENSES PAGE
+// ═══════════════════════════════════════════════════════════════
+let selectedMonth='';
+function renderExpenses(){
+  const now=new Date();
+  if(!selectedMonth)selectedMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  // month tabs
+  const months=availableMonths();
+  const allMonths=[...new Set([...months,selectedMonth])].sort().reverse().slice(0,6);
+  document.getElementById('exp-month-tabs').innerHTML=allMonths.map(m=>{
+    const [yr,mo]=m.split('-');
+    return `<button class="tab ${m===selectedMonth?'active':''}" onclick="selectedMonth='${m}';renderExpenses()">${MONTH_NAMES[+mo-1]} ${yr.slice(2)}</button>`;
+  }).join('');
+
+  const [yr,mo]=selectedMonth.split('-');
+  const exps=monthExpenses(+yr,+mo-1);
+  const catFilter=document.getElementById('exp-cat-filter').value;
+
+  // populate category filter
+  const catEl=document.getElementById('exp-cat-filter');
+  const prev=catEl.value;
+  catEl.innerHTML='<option value="">All Categories</option>'+S.categories.map(c=>`<option ${c===prev?'selected':''}>${c}</option>`).join('');
+
+  const filtered=catFilter?exps.filter(e=>e.cat===catFilter):exps;
+  const total=filtered.reduce((s,e)=>s+(+e.amt||0),0);
+  const topCat=Object.entries(catSpend(filtered)).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('exp-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Total Spent</div><div class="mc-val" style="color:var(--red)">${fmt(total)}</div><div class="mc-sub">${filtered.length} transactions</div></div>
+    <div class="mc"><div class="mc-label">Top Category</div><div class="mc-val" style="font-size:16px">${topCat?topCat[0]:'—'}</div><div class="mc-sub">${topCat?fmt(topCat[1]):''}</div></div>
+    <div class="mc"><div class="mc-label">Daily Average</div><div class="mc-val" style="font-size:18px">${fmt(total/Math.max(1,new Date(+yr,+mo,0).getDate()))}</div><div class="mc-sub">Per day</div></div>
+  `;
+
+  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('exp-list').innerHTML=sorted.length
+    ?sorted.map(e=>`<div style="position:relative">${expRow(e)}<button onclick="deleteExpense(${e.id})" style="position:absolute;top:50%;right:8px;transform:translateY(-50%);background:var(--red-bg);border:none;color:var(--red);border-radius:4px;padding:3px 7px;font-size:11px;cursor:pointer">✕</button></div>`).join('')
+    :'<div style="font-size:13px;color:var(--text3);padding:16px 0;text-align:center">No transactions this month</div>';
+}
+
+function deleteExpense(id){
+  S.expenses=S.expenses.filter(e=>e.id!==id);
+  save();renderExpenses();renderDashboard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUDGET PAGE
+// ═══════════════════════════════════════════════════════════════
+function renderBudget(){
+  const now=new Date();
+  document.getElementById('budget-month').textContent=MONTH_NAMES[now.getMonth()]+' '+now.getFullYear();
+  const exps=thisMonthExpenses();
+  const spent=catSpend(exps);
+  const totalBudget=Object.values(S.budgets).reduce((a,b)=>a+(+b||0),0);
+  const totalSpent=Object.values(spent).reduce((a,b)=>a+b,0);
+  const over=Object.entries(S.budgets).filter(([k,v])=>(spent[k]||0)>v).length;
+
+  document.getElementById('budget-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Total Budget</div><div class="mc-val">${fmt(totalBudget)}</div></div>
+    <div class="mc"><div class="mc-label">Total Spent</div><div class="mc-val" style="color:var(--red)">${fmt(totalSpent)}</div></div>
+    <div class="mc"><div class="mc-label">Remaining</div><div class="mc-val" style="color:${totalBudget-totalSpent>=0?'var(--green)':'var(--red)'}">${fmt(totalBudget-totalSpent)}</div></div>
+    <div class="mc"><div class="mc-label">Over Budget</div><div class="mc-val" style="color:${over?'var(--red)':'var(--green)'}">${over} cats</div></div>
+  `;
+
+  const budgetCats=Object.keys(S.budgets).filter(k=>S.budgets[k]>0);
+  document.getElementById('budget-bars').innerHTML=budgetCats.map(k=>{
+    const s=spent[k]||0;const b=+S.budgets[k]||1;
+    const pct=Math.min(100,s/b*100);const over=s>b;
+    return `<div class="budget-item">
+      <div class="bi-head">
+        <span style="color:var(--text)">${k}</span>
+        <span style="color:${over?'var(--red)':'var(--text2)'}">${fmt(s)} / ${fmt(b)}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill ${over?'bg-red':'bg-green'}" style="width:${pct}%"></div></div>
+      <div class="bi-pct" style="margin-top:4px;color:${over?'var(--red)':'var(--text3)'}">${pct.toFixed(0)}% used${over?' — Over budget!':''}</div>
+    </div>`;
+  }).join('');
+
+  // Budget vs Actual bar chart
+  destroyChart('budgetChart');
+  const ctx=document.getElementById('budgetChart');if(!ctx)return;
+  charts['budgetChart']=new Chart(ctx,{type:'bar',data:{labels:budgetCats.map(k=>k.split(' ')[0]),datasets:[{label:'Budget',data:budgetCats.map(k=>+S.budgets[k]||0),backgroundColor:'rgba(201,168,76,0.3)',borderRadius:4},{label:'Spent',data:budgetCats.map(k=>spent[k]||0),backgroundColor:'rgba(240,82,82,0.5)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#454d62',font:{size:10},callback:v=>'₹'+(v/1000).toFixed(0)+'K'}}}}});
+
+  // budget modal inputs
+  document.getElementById('budget-inputs').innerHTML=S.categories.map(k=>`
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl">${k}</label>
+      <input class="fi" id="bi-${k.replace(/\W/g,'_')}" type="number" placeholder="0" value="${S.budgets[k]||''}">
+    </div>`).join('');
+}
+
+function saveBudgets(){
+  S.categories.forEach(k=>{
+    const el=document.getElementById('bi-'+k.replace(/\W/g,'_'));
+    if(el)S.budgets[k]=+el.value||0;
+  });
+  save();closeModal('set-budget');renderBudget();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UPI PAGE
+// ═══════════════════════════════════════════════════════════════
+function renderUPI(){
+  const filter=document.getElementById('upi-filter')?.value||'';
+  const exps=thisMonthExpenses();
+  const upi=upiSpend(exps);
+  const upiKeys=Object.keys(upi).sort((a,b)=>upi[b]-upi[a]);
+  const totalUpi=Object.values(upi).reduce((a,b)=>a+b,0);
+
+  document.getElementById('upi-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Total via UPI</div><div class="mc-val">${fmt(totalUpi)}</div><div class="mc-sub">This month</div></div>
+    <div class="mc"><div class="mc-label">Most Used App</div><div class="mc-val" style="font-size:15px">${upiKeys[0]||'—'}</div><div class="mc-sub">${upiKeys[0]?fmt(upi[upiKeys[0]]):''}</div></div>
+    <div class="mc"><div class="mc-label">Transactions</div><div class="mc-val">${exps.length}</div></div>
+  `;
+
+  const colors=upiKeys.map(k=>UPI_COLORS[k]||'#8a93aa');
+  mkBarChart('upiBarChart',upiKeys,upiKeys.map(k=>upi[k]),colors,true);
+
+  document.getElementById('upi-app-list').innerHTML=upiKeys.map(k=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:10px;height:10px;border-radius:50%;background:${UPI_COLORS[k]||'#8a93aa'};flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:13.5px;font-weight:500">${k}</div>
+        <div style="font-size:11px;color:var(--text3)">${exps.filter(e=>e.upi===k).length} transactions</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:600">${fmt(upi[k])}</div>
+        <div style="font-size:11px;color:var(--text3)">${totalUpi?pct(upi[k]/totalUpi*100):'0%'}</div>
+      </div>
+    </div>`).join('')||'<div style="font-size:13px;color:var(--text3)">No data</div>';
+
+  const filtered=filter?exps.filter(e=>e.upi===filter):exps;
+  const sorted=[...filtered].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('upi-txn-list').innerHTML=sorted.map(e=>expRow(e)).join('')||'<div style="font-size:13px;color:var(--text3);padding:8px 0">No transactions</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADD EXPENSE
+// ═══════════════════════════════════════════════════════════════
+function initAddExpense(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('m-date').value=today;
+  // populate category selects
+  ['m-cat','sr-cat','ocr-cat'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=S.categories.map(c=>`<option>${c}</option>`).join('');
+  });
+}
+
+function addManualExpense(){
+  const amt=+document.getElementById('m-amt').value;
+  const desc=document.getElementById('m-desc').value.trim();
+  if(!amt||!desc)return alert('Amount and description are required');
+  S.expenses.push({
+    id:S.nextId++,
+    amt,desc,
+    cat:document.getElementById('m-cat').value,
+    upi:document.getElementById('m-upi').value,
+    merchant:document.getElementById('m-merchant').value.trim()||'',
+    date:document.getElementById('m-date').value
+  });
+  save();
+  document.getElementById('m-amt').value='';
+  document.getElementById('m-desc').value='';
+  document.getElementById('m-merchant').value='';
+  alert('Expense added! ✓');
+  go('expenses',null);
+}
+
+function switchAddTab(tab,el){
+  ['manual','sms','screenshot'].forEach(t=>{
+    document.getElementById('add-'+t).style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+
+// SMS Parser
+function parseSMS(){
+  const sms=document.getElementById('sms-text').value.trim();
+  if(!sms)return alert('Paste an SMS first');
+  const result=extractFromSMS(sms);
+  if(!result.amt){alert('Could not extract amount from SMS. Try a different format.');return;}
+  document.getElementById('sr-amt').value=result.amt;
+  document.getElementById('sr-desc').value=result.desc;
+  document.getElementById('sr-date').value=result.date;
+  // populate sr-cat
+  document.getElementById('sr-cat').innerHTML=S.categories.map(c=>`<option>${c}</option>`).join('');
+  // guess category
+  guessCatForSelect('sr-cat',result.desc);
+  document.getElementById('sms-result').style.display='block';
+}
+
+function extractFromSMS(sms){
+  // Amount patterns
+  const amtPatterns=[
+    /(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{2})?)/i,
+    /([\d,]+(?:\.\d{2})?)\s*(?:INR|Rs\.?|₹)/i,
+    /debited.*?(?:INR|Rs\.?|₹)\s*([\d,]+)/i,
+  ];
+  let amt=0;
+  for(const p of amtPatterns){const m=sms.match(p);if(m){amt=parseFloat(m[1].replace(',',''));break;}}
+
+  // Merchant / description
+  let desc='UPI Payment';
+  const upiMatch=sms.match(/(?:UPI|to|at)\s+([A-Za-z0-9\s@._-]{3,30}?)(?:\s*\.|,|for|Avl|Ref|\.)/i);
+  if(upiMatch)desc=upiMatch[1].trim().replace(/^\d+/,'').trim()||desc;
+  const merMatch=sms.match(/(?:to|at|for)\s+([A-Z][A-Za-z0-9\s]{2,20})/);
+  if(merMatch&&!upiMatch)desc=merMatch[1].trim();
+
+  // Date
+  let date=new Date().toISOString().split('T')[0];
+  const dateMatch=sms.match(/(\d{2})[-\/](\d{2})[-\/](\d{2,4})/);
+  if(dateMatch){
+    let[,d,m,y]=dateMatch;
+    if(y.length===2)y='20'+y;
+    date=`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+
+  return{amt,desc,date};
+}
+
+function loadSMSSample(){
+  const samples=[
+    'INR 500.00 debited from A/c **4321 on 15-03-2026 for UPI/SWIGGY FOOD/9876543210@ybl. Avl Bal INR 12,450.00. If not done by you call 18001234567',
+    'Rs.1200 debited from SBI A/c **5678 on 14-Mar-26 to BIGBASKET@UPI. Avl Bal Rs.45,000. Not you? Call 1800-425-3800',
+    'HDFC Bank: INR 850.00 debited from A/c XX2345 on 13/03/2026 via UPI ZOMATO/order@oksbi. Ref No 123456789',
+  ];
+  document.getElementById('sms-text').value=samples[Math.floor(Math.random()*samples.length)];
+}
+
+function saveParsedSMS(){
+  const amt=+document.getElementById('sr-amt').value;
+  const desc=document.getElementById('sr-desc').value.trim();
+  if(!amt||!desc)return alert('Amount and description required');
+  S.expenses.push({id:S.nextId++,amt,desc,cat:document.getElementById('sr-cat').value,upi:document.getElementById('sr-upi').value,merchant:'',date:document.getElementById('sr-date').value});
+  save();document.getElementById('sms-result').style.display='none';document.getElementById('sms-text').value='';
+  alert('Expense saved from SMS ✓');go('expenses',null);
+}
+
+// Screenshot OCR
+function handleImageUpload(e){const f=e.target.files[0];if(f)processImage(f);}
+function handleDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))processImage(f);}
+
+function processImage(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('ocr-img').src=e.target.result;
+    document.getElementById('ocr-preview').style.display='block';
+    document.getElementById('ocr-status').textContent='🔍 Analysing screenshot with AI...';
+    document.getElementById('ocr-result').style.display='none';
+    runOCR(e.target.result.split(',')[1],file.type);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function runOCR(base64,mediaType){
+  const status=document.getElementById('ocr-status');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:400,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+          {type:'text',text:'This is a UPI payment screenshot (PhonePe, Google Pay, Paytm, or similar). Extract: 1) amount paid in rupees (number only), 2) merchant/payee name, 3) payment date if visible. Reply ONLY with JSON: {"amount":500,"merchant":"Swiggy","date":"2026-03-15","upi_app":"Google Pay"}. If you cannot determine something, use null.'}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content.find(c=>c.type==='text')?.text||'{}';
+    let parsed;
+    try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim())}catch(e){parsed={}}
+
+    if(parsed.amount){
+      document.getElementById('ocr-amt').value=parsed.amount||'';
+      document.getElementById('ocr-desc').value=parsed.merchant?`Payment to ${parsed.merchant}`:'UPI Payment';
+      document.getElementById('ocr-date').value=parsed.date||new Date().toISOString().split('T')[0];
+      document.getElementById('ocr-cat').innerHTML=S.categories.map(c=>`<option>${c}</option>`).join('');
+      if(parsed.merchant)guessCatForSelect('ocr-cat',parsed.merchant);
+      if(parsed.upi_app){
+        const u=document.getElementById('ocr-upi');
+        for(let i=0;i<u.options.length;i++){if(u.options[i].text.toLowerCase().includes(parsed.upi_app.toLowerCase())){u.selectedIndex=i;break;}}
+      }
+      status.textContent='✅ Extracted successfully — review and save';
+      document.getElementById('ocr-result').style.display='block';
+    }else{
+      status.textContent='⚠ Could not extract data. Try a clearer screenshot or use manual entry.';
+    }
+  }catch(err){
+    status.textContent='⚠ AI extraction failed — fill in manually below.';
+    document.getElementById('ocr-amt').value='';
+    document.getElementById('ocr-desc').value='UPI Payment';
+    document.getElementById('ocr-date').value=new Date().toISOString().split('T')[0];
+    document.getElementById('ocr-cat').innerHTML=S.categories.map(c=>`<option>${c}</option>`).join('');
+    document.getElementById('ocr-result').style.display='block';
+  }
+}
+
+function saveOCRExpense(){
+  const amt=+document.getElementById('ocr-amt').value;
+  const desc=document.getElementById('ocr-desc').value.trim();
+  if(!amt||!desc)return alert('Amount and description required');
+  S.expenses.push({id:S.nextId++,amt,desc,cat:document.getElementById('ocr-cat').value,upi:document.getElementById('ocr-upi').value,merchant:'',date:document.getElementById('ocr-date').value});
+  save();document.getElementById('ocr-preview').style.display='none';document.getElementById('img-input').value='';
+  alert('Expense saved from screenshot ✓');go('expenses',null);
+}
+
+function guessCatForSelect(selectId,text){
+  const t=text.toLowerCase();
+  const guesses={'Food & Dining':['swiggy','zomato','food','restaurant','cafe','eat','pizza','burger'],'Groceries':['bigbasket','grofers','blinkit','dmart','grocery','vegetables','milk'],'Shopping':['amazon','flipkart','myntra','shopping','mall','cloth'],'Transport':['uber','ola','auto','cab','rapido','metro','bus'],'Entertainment':['netflix','hotstar','prime','movie','cinema','spotify'],'Health':['apollo','medplus','pharma','hospital','doctor','medicine'],'Utilities':['electricity','water','gas','bill','broadband','internet'],'Fuel':['petrol','fuel','diesel','pump'],'Retail':['reliance','big bazaar','supermarket','store']};
+  const el=document.getElementById(selectId);if(!el)return;
+  for(const[cat,keywords]of Object.entries(guesses)){
+    if(keywords.some(k=>t.includes(k))){
+      for(let i=0;i<el.options.length;i++){if(el.options[i].value===cat){el.selectedIndex=i;return;}}
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIP
+// ═══════════════════════════════════════════════════════════════
+function renderSIP(){
+  document.getElementById('sip-hdr').textContent=S.sip.toLocaleString('en-IN');
+  document.getElementById('sip-mode-hdr').textContent=S.mode==='balanced'?'⚖ Balanced Mode':'🎯 Correction Mode';
+  const bd=sipBreakdown();
+  const total=bd.reduce((s,f)=>s+f.sipAmt,0);
+  document.getElementById('sip-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Monthly SIP</div><div class="mc-val">${fmt(S.sip)}</div></div>
+    <div class="mc"><div class="mc-label">Allocated</div><div class="mc-val" style="color:var(--green)">${fmt(total)}</div></div>
+    <div class="mc"><div class="mc-label">Unallocated</div><div class="mc-val" style="color:${S.sip-total?'var(--red)':'var(--green)'}">${fmt(S.sip-total)}</div></div>
+  `;
+  const COLS=['#c9a84c','#4f8ef7','#3ecf8e','#9b6dff','#f97316'];
+  document.getElementById('sip-list').innerHTML=bd.map((f,i)=>`
+    <div class="exp-item">
+      <div style="width:10px;height:10px;border-radius:50%;background:${COLS[i%5]};flex-shrink:0"></div>
+      <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--text3)">Target ${pct(f.target)}</div></div>
+      <div style="text-align:right"><div style="font-size:14px;font-weight:600">${fmt(f.sipAmt)}</div><div style="font-size:11px;color:var(--text3)">${S.sip?pct(f.sipAmt/S.sip*100):'0%'}</div></div>
+    </div>`).join('');
+  destroyChart('sipChart');
+  const ctx=document.getElementById('sipChart');if(!ctx)return;
+  charts['sipChart']=new Chart(ctx,{type:'doughnut',data:{labels:bd.map(f=>f.name.split(' ').slice(0,2).join(' ')),datasets:[{data:bd.map(f=>f.sipAmt),backgroundColor:COLS.slice(0,bd.length),borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+}
+
+function sipBreakdown(){
+  if(S.mode==='correction'){
+    const under=S.funds.filter(f=>fundActual(f)<f.target);
+    if(!under.length)return S.funds.map(f=>({...f,sipAmt:Math.round(S.sip*f.target/100)}));
+    const tot=under.reduce((s,f)=>s+f.target,0);
+    return S.funds.map(f=>({...f,sipAmt:under.includes(f)?Math.round(S.sip*f.target/tot):0}));
+  }
+  return S.funds.map(f=>({...f,sipAmt:Math.round(S.sip*f.target/100)}));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FUNDS
+// ═══════════════════════════════════════════════════════════════
+function renderFunds(){
+  const tf=totalFunds();
+  document.getElementById('funds-body').innerHTML=S.funds.map((f,i)=>{
+    const actual=fundActual(f);const dev=actual-f.target;
+    return`<tr>
+      <td><div style="font-weight:500">${f.name}</div><div style="font-size:11px;color:var(--text3)">${f.category}</div></td>
+      <td>${fmt(f.value)}</td>
+      <td>${pct(f.target)}</td>
+      <td>${pct(actual)}</td>
+      <td style="color:${dev>3?'var(--red)':dev<-3?'var(--green)':'var(--text2)'}">${dev>0?'+':''}${pct(dev)}</td>
+      <td><button class="btn btn-outline btn-xs" onclick="openEditFund(${i})">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addFund(){
+  const name=document.getElementById('af-name').value.trim();
+  const target=+document.getElementById('af-target').value;
+  if(!name||!target)return alert('Name and target required');
+  S.funds.push({name,category:document.getElementById('af-cat').value,target,value:+document.getElementById('af-val').value||0});
+  save();closeModal('add-fund');renderFunds();
+}
+function openEditFund(i){
+  document.getElementById('ef-idx').value=i;
+  document.getElementById('ef-name').value=S.funds[i].name;
+  document.getElementById('ef-target').value=S.funds[i].target;
+  document.getElementById('ef-val').value=S.funds[i].value;
+  openModal('edit-fund');
+}
+function saveFund(){
+  const i=+document.getElementById('ef-idx').value;
+  S.funds[i].name=document.getElementById('ef-name').value;
+  S.funds[i].target=+document.getElementById('ef-target').value;
+  S.funds[i].value=+document.getElementById('ef-val').value;
+  save();closeModal('edit-fund');renderFunds();
+}
+function delFund(){
+  const i=+document.getElementById('ef-idx').value;
+  if(!confirm('Delete '+S.funds[i].name+'?'))return;
+  S.funds.splice(i,1);save();closeModal('edit-fund');renderFunds();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STOCKS
+// ═══════════════════════════════════════════════════════════════
+function renderStocks(){
+  const ts=totalStocks();
+  const sorted=[...S.stocks].map((s,i)=>({...s,orig:i})).sort((a,b)=>(stockActual(a)-a.target)-(stockActual(b)-b.target));
+  document.getElementById('stocks-metrics').innerHTML=`
+    <div class="mc"><div class="mc-label">Total Stocks</div><div class="mc-val">${fmt(ts)}</div></div>
+    <div class="mc"><div class="mc-label">Buy Next</div><div class="mc-val" style="font-size:15px;color:var(--gold)">${sorted[0]?.name||'—'}</div><div class="mc-sub">Most underweight</div></div>
+  `;
+  document.getElementById('stocks-list').innerHTML=sorted.map((s,rank)=>{
+    const actual=stockActual(s);const dev=actual-s.target;
+    return`<div class="exp-item">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--gold-dim);color:var(--gold);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${rank+1}</div>
+      <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${s.name}</div><div style="font-size:11px;color:var(--text3)">${s.sector} · Target ${pct(s.target)} · Actual ${pct(actual)}</div></div>
+      <div style="text-align:right;margin-right:10px"><div style="font-size:14px;font-weight:500">${fmt(s.value)}</div><div style="font-size:11px;color:${dev<-3?'var(--green)':dev>3?'var(--red)':'var(--text3)'}">${dev>0?'+':''}${pct(dev)}</div></div>
+      <button class="btn btn-outline btn-xs" onclick="openEditStock(${s.orig})">Edit</button>
+    </div>`;
+  }).join('');
+}
+function addStock(){
+  const name=document.getElementById('as-name').value.trim();
+  const target=+document.getElementById('as-target').value;
+  if(!name||!target)return alert('Name and target required');
+  S.stocks.push({name,sector:document.getElementById('as-sector').value,target,value:+document.getElementById('as-val').value||0});
+  save();closeModal('add-stock');renderStocks();
+}
+function openEditStock(i){
+  document.getElementById('es-idx').value=i;
+  document.getElementById('es-name').value=S.stocks[i].name;
+  document.getElementById('es-target').value=S.stocks[i].target;
+  document.getElementById('es-val').value=S.stocks[i].value;
+  openModal('edit-stock');
+}
+function saveStock(){
+  const i=+document.getElementById('es-idx').value;
+  S.stocks[i].name=document.getElementById('es-name').value;
+  S.stocks[i].target=+document.getElementById('es-target').value;
+  S.stocks[i].value=+document.getElementById('es-val').value;
+  save();closeModal('edit-stock');renderStocks();
+}
+function delStock(){
+  const i=+document.getElementById('es-idx').value;
+  if(!confirm('Delete '+S.stocks[i].name+'?'))return;
+  S.stocks.splice(i,1);save();closeModal('edit-stock');renderStocks();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════
+function renderSettings(){
+  document.getElementById('cfg-sip').value=S.sip;
+  document.getElementById('cfg-cash').value=S.cash;
+  document.getElementById('cfg-review').value=S.reviewDate;
+  document.getElementById('cfg-income').value=S.income||0;
+  renderSettingsMode();
+  document.getElementById('cat-list-settings').innerHTML=S.categories.map(c=>`
+    <span class="chip c-blue" style="cursor:default">${c}</span>`).join('');
+}
+function renderSettingsMode(){
+  document.getElementById('mb-bal').className='btn'+(S.mode==='balanced'?' btn-gold':' btn-outline');
+  document.getElementById('mb-cor').className='btn'+(S.mode==='correction'?' btn-gold':' btn-outline');
+  document.getElementById('mode-desc').textContent=S.mode==='balanced'
+    ?'Distributes SIP proportionally across all funds based on target allocation.'
+    :'Focuses entire SIP on underweight funds only — faster rebalancing.';
+}
+function setMode(m){S.mode=m;save();renderSettingsMode();}
+function saveConfig(){
+  S.sip=+document.getElementById('cfg-sip').value||0;
+  S.cash=+document.getElementById('cfg-cash').value||0;
+  S.reviewDate=document.getElementById('cfg-review').value;
+  S.income=+document.getElementById('cfg-income').value||0;
+  save();alert('Settings saved ✓');renderDashboard();
+}
+function addCategory(){
+  const name=document.getElementById('new-cat-name').value.trim();
+  if(!name)return;
+  if(!S.categories.includes(name))S.categories.push(name);
+  save();renderSettings();document.getElementById('new-cat-name').value='';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+const PAGE_RENDER={
+  dashboard:renderDashboard,
+  networth:renderNetWorth,
+  expenses:renderExpenses,
+  budget:renderBudget,
+  upi:renderUPI,
+  'add-expense':initAddExpense,
+  sip:renderSIP,
+  funds:renderFunds,
+  stocks:renderStocks,
+  settings:renderSettings
+};
+
+function go(page,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl)navEl.classList.add('active');
+  if(PAGE_RENDER[page])PAGE_RENDER[page]();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════
+function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+load();
+if(!S.reviewDate){const d=new Date();d.setMonth(d.getMonth()+3);S.reviewDate=d.toISOString().split('T')[0];}
+renderDashboard();
+</script>
+</body>
+</html>
